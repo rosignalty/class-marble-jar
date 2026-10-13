@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Classroom Digital Marble Jar 🏆</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Matter.js Physics Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+  <!-- Canvas Confetti for Victory Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            quicksand: ['Quicksand', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              yellow: '#FFD166',
+              coral: '#FF6B6B',
+              teal: '#4ECDC4',
+              blue: '#1A535C',
+              purple: '#845EC2',
+              pink: '#FF96AD',
+              emerald: '#06D6A0'
+            }
+          },
+          animation: {
+            'bounce-gentle': 'bounceGentle 2s infinite',
+            'pulse-glow': 'pulseGlow 2s infinite',
+            'pop': 'pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          },
+          keyframes: {
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(-4%)' },
+              '50%': { transform: 'translateY(0)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+              '50%': { opacity: '0.85', transform: 'scale(1.03)' }
+            },
+            pop: {
+              '0%': { transform: 'scale(0.85)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Fredoka', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa 0%, #fff9c4 40%, #f3e5f5 100%);
+      min-height: 100vh;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 4px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-tactile {
+      transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+      touch-action: manipulation;
+    }
+    .btn-tactile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+    }
+    .btn-tactile:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+    }
+
+    #physics-canvas {
+      touch-action: none;
+      cursor: grab;
+    }
+    #physics-canvas:active {
+      cursor: grabbing;
+    }
+
+    .bg-polka {
+      background-image: radial-gradient(rgba(78, 205, 196, 0.25) 2.5px, transparent 2.5px);
+      background-size: 26px 26px;
+    }
+  </style>
+</head>
+<body class="bg-polka text-slate-800 min-h-screen flex flex-col justify-between p-3 md:p-6">
+
+  <!-- Top Navigation Header -->
+  <header class="max-w-6xl mx-auto w-full flex flex-wrap items-center justify-between gap-4 mb-3">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-yellow via-brand-coral to-brand-purple flex items-center justify-center text-white text-2xl shadow-lg animate-bounce-gentle">
+        <i class="fa-solid fa-jar"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-blue via-brand-purple to-brand-coral tracking-wide">
+          Classroom Marble Jar
+        </h1>
+        <p class="text-xs md:text-sm font-quicksand font-bold text-slate-500">Collect marbles for great behavior & unlock class rewards!</p>
+      </div>
+    </div>
+
+    <!-- Top Utility Controls -->
+    <div class="flex items-center gap-2">
+      <!-- Fullscreen Button -->
+      <button id="btn-fullscreen" title="Toggle Fullscreen" class="btn-tactile bg-white text-slate-700 hover:bg-slate-50 p-3 rounded-2xl text-lg font-bold border-2 border-slate-100">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+
+      <!-- Mute Toggle -->
+      <button id="btn-sound" title="Toggle Sound" class="btn-tactile bg-white text-brand-purple hover:bg-slate-50 p-3 rounded-2xl text-lg font-bold border-2 border-purple-100 flex items-center gap-2">
+        <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+        <span class="text-xs hidden sm:inline font-quicksand font-bold">Sound</span>
+      </button>
+
+      <!-- Settings Button -->
+      <button id="btn-settings" title="Jar Settings" class="btn-tactile bg-brand-teal text-white hover:bg-teal-500 p-3 rounded-2xl text-lg font-bold flex items-center gap-2">
+        <i class="fa-solid fa-gear"></i>
+        <span class="text-xs hidden sm:inline font-quicksand font-bold">Settings</span>
+      </button>
+
+      <!-- Guide / Info -->
+      <button id="btn-info" title="How to Play" class="btn-tactile bg-brand-yellow text-slate-800 hover:bg-yellow-400 p-3 rounded-2xl text-lg font-bold">
+        <i class="fa-solid fa-circle-question"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+
+    <!-- LEFT COLUMN: Goal Banner, Progress & Buttons -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+
+      <!-- GOAL TRACKER CARD -->
+      <div class="glass-card rounded-3xl p-5 md:p-6 border-4 border-white shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <span class="bg-gradient-to-r from-brand-purple to-indigo-600 text-white text-xs md:text-sm font-bold uppercase px-3.5 py-1 rounded-full shadow-sm tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-trophy text-yellow-300"></i> Target Reward
+          </span>
+          <span id="completion-badge" class="hidden bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+            🎉 UNLOCKED!
+          </span>
+        </div>
+
+        <!-- Reward Title Display -->
+        <h2 id="reward-title-display" class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-4 tracking-tight leading-tight">
+          Pizza Party! 🍕
+        </h2>
+
+        <!-- Progress Bar -->
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between items-baseline text-sm font-quicksand font-bold">
+            <span class="text-slate-500">Progress</span>
+            <span id="percent-display" class="text-brand-purple font-black text-base">0%</span>
+          </div>
+
+          <div class="w-full bg-slate-200/90 h-7 rounded-2xl p-1 shadow-inner relative overflow-hidden border border-slate-300/60">
+            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-brand-teal via-brand-yellow to-brand-coral rounded-xl transition-all duration-500 ease-out shadow-md relative" style="width: 0%;">
+              <div class="absolute inset-0 bg-white/25 animate-pulse rounded-xl"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big Number Counter Box -->
+        <div class="bg-white/95 rounded-2xl p-4 border-2 border-slate-100 flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-bold">
+              🔮
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 font-bold uppercase font-quicksand">Marbles In Jar</p>
+              <p class="text-3xl font-black text-slate-800 tracking-tight">
+                <span id="current-count" class="text-brand-teal">0</span>
+                <span class="text-slate-300 font-normal">/</span>
+                <span id="goal-target" class="text-slate-500 text-2xl">50</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <span class="text-xs text-slate-400 font-bold block font-quicksand">To Goal</span>
+            <span id="remaining-count" class="text-lg font-bold text-brand-coral bg-rose-50 px-3 py-1 rounded-xl border border-rose-100 inline-block">50 left</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SMARTBOARD ACTION CONTROLS -->
+      <div class="glass-card rounded-3xl p-5 border-4 border-white shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-quicksand">
+            Smartboard Quick Actions
+          </h3>
+          <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md">
+            <i class="fa-solid fa-hand-pointer mr-1"></i> Tap or Drag
+          </span>
+        </div>
+
+        <!-- Primary Add Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-add-1" class="btn-tactile bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-white font-bold text-lg py-3.5 px-4 rounded-2xl border-2 border-emerald-300 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-plus text-xl"></i> +1 Marble
+          </button>
+
+          <button id="btn-add-5" class="btn-tactile bg-gradient-to-b from-brand-teal to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-bold text-lg py-3.5 px-4 rounded-2xl border-2 border-teal-300 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-xl"></i> +5 Burst
+          </button>
+        </div>
+
+        <!-- Secondary Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="btn-sub-1" class="btn-tactile bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-white font-bold text-md py-2.5 px-3 rounded-2xl border-2 border-amber-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-minus text-sm"></i> -1 Marble
+          </button>
+
+          <button id="btn-empty-prompt" class="btn-tactile bg-gradient-to-b from-rose-400 to-rose-500 hover:from-rose-300 hover:to-rose-400 text-white font-bold text-md py-2.5 px-3 rounded-2xl border-2 border-rose-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-left text-sm"></i> Clear Jar
+          </button>
+        </div>
+      </div>
+
+      <!-- MARBLE COLOR THEME SELECTOR -->
+      <div class="glass-card rounded-3xl p-4 border-4 border-white shadow-xl">
+        <label class="text-xs font-bold uppercase tracking-wider text-slate-400 font-quicksand block mb-2">Marble Color Theme</label>
+        <div class="grid grid-cols-4 gap-2" id="palette-selector">
+          <button data-palette="rainbow" class="palette-btn border-2 border-brand-purple bg-gradient-to-r from-red-400 via-green-400 to-blue-400 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+            <span>🌈</span> Rainbow
+          </button>
+          <button data-palette="cosmic" class="palette-btn border-2 border-transparent bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+            <span>✨</span> Cosmic
+          </button>
+          <button data-palette="candy" class="palette-btn border-2 border-transparent bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-300 p-2 rounded-xl text-xs font-bold text-slate-800 shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+            <span>🍬</span> Candy
+          </button>
+          <button data-palette="ocean" class="palette-btn border-2 border-transparent bg-gradient-to-r from-cyan-500 via-teal-400 to-blue-600 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+            <span>🌊</span> Ocean
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: Interactive Canvas & Physics Stage -->
+    <section class="lg:col-span-7 flex flex-col items-center justify-center w-full">
+
+      <div class="relative w-full max-w-[500px] mx-auto flex flex-col items-center">
+        
+        <!-- Drag Ribbon Helper Banner -->
+        <div class="mb-3 bg-white/95 backdrop-blur border-2 border-brand-teal/50 px-5 py-2 rounded-full shadow-md text-xs sm:text-sm font-extrabold text-brand-blue flex items-center gap-2 animate-bounce-gentle">
+          <i class="fa-solid fa-hand-pointer text-brand-coral text-base animate-pulse"></i>
+          <span>Drag marbles from top tray down into jar!</span>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="w-full relative rounded-3xl overflow-hidden glass-card border-8 border-white/90 shadow-2xl bg-gradient-to-b from-sky-100/60 via-sky-50/30 to-amber-50/40">
+          <canvas id="physics-canvas" class="w-full block z-10 aspect-[5/6.5]"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- SETTINGS MODAL -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-brand-teal animate-pop">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-brand-teal"></i> Jar Settings
+        </h3>
+        <button id="close-settings" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 font-quicksand">
+        <!-- Edit Reward Title -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Class Reward Title</label>
+          <input type="text" id="setting-reward-title" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-teal" placeholder="e.g. Pizza Party 🍕">
+        </div>
+
+        <!-- Quick Presets -->
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reward Presets</label>
+          <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Pizza Party! 🍕">🍕 Pizza Party!</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Extra Recess! 🛝">🛝 Extra Recess!</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Movie & Popcorn 🍿">🍿 Movie Night</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Pajama Day! 🛏️">🛏️ Pajama Day!</button>
+          </div>
+        </div>
+
+        <!-- Target Marble Goal -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Marble Goal Target</label>
+          <input type="number" id="setting-goal-num" min="5" max="200" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-teal" value="50">
+          <p class="text-xs text-slate-400 mt-1">Holds up to 100+ marbles comfortably</p>
+        </div>
+
+        <!-- Volume slider -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-sm font-bold text-slate-700">Sound Volume</label>
+            <span id="volume-val" class="text-xs font-bold text-brand-purple">80%</span>
+          </div>
+          <input type="range" id="setting-volume" min="0" max="100" value="80" class="w-full accent-brand-purple cursor-pointer">
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 font-fredoka">
+        <button id="cancel-settings" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-2xl">Cancel</button>
+        <button id="save-settings" class="bg-brand-teal hover:bg-teal-500 text-white font-bold px-6 py-2.5 rounded-2xl shadow-lg btn-tactile">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM EMPTY MODAL -->
+  <div id="modal-confirm-empty" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border-4 border-rose-400 animate-pop text-center">
+      <div class="text-4xl mb-2">⚠️</div>
+      <h3 class="text-xl font-bold text-slate-800 mb-2">Empty Marble Jar?</h3>
+      <p class="text-sm font-quicksand text-slate-500 mb-5">This will clear all marbles from the jar so you can start fresh!</p>
+      <div class="flex gap-3 justify-center font-fredoka">
+        <button id="cancel-empty" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2 rounded-2xl">Cancel</button>
+        <button id="confirm-empty-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2 rounded-2xl shadow-md btn-tactile">Yes, Clear Jar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELEBRATION GOAL REACHED MODAL -->
+  <div id="modal-celebration" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border-8 border-brand-yellow text-center animate-pop relative overflow-hidden">
+      <div class="text-6xl mb-3 animate-bounce">🏆</div>
+      <h2 class="text-3xl md:text-4xl font-black text-slate-800 mb-2">GOAL REACHED!</h2>
+      <p class="text-lg font-quicksand text-slate-600 font-bold mb-4">Great job class! You collected all marbles!</p>
+      
+      <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 inline-block w-full">
+        <p class="text-xs uppercase font-bold text-amber-600 tracking-wider">REWARD UNLOCKED</p>
+        <p id="celebration-reward-name" class="text-2xl md:text-3xl font-black text-brand-purple mt-1">Pizza Party! 🍕</p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button id="btn-celebrate-keep" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-2xl font-fredoka">
+          Keep Marbles
+        </button>
+        <button id="btn-celebrate-reset" class="bg-gradient-to-r from-brand-teal to-emerald-500 hover:from-teal-500 hover:to-emerald-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg btn-tactile font-fredoka">
+          Start New Jar! 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY / INFO MODAL -->
+  <div id="modal-info" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-brand-yellow animate-pop font-quicksand">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-extrabold text-slate-800 font-fredoka flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-brand-yellow"></i> Classroom Guide
+        </h3>
+        <button id="close-info" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-sm text-slate-600">
+        <div class="flex gap-3 items-start">
+          <div class="bg-teal-100 text-brand-teal rounded-xl p-2 font-bold text-lg">1</div>
+          <p><strong class="text-slate-800">Earn Marbles:</strong> Award marbles when students follow class expectations, show kindness, or excel!</p>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="bg-purple-100 text-brand-purple rounded-xl p-2 font-bold text-lg">2</div>
+          <p><strong class="text-slate-800">Drag & Drop:</strong> Click or touch a marble in the top dispenser tray and drag it into the jar opening!</p>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="bg-amber-100 text-amber-600 rounded-xl p-2 font-bold text-lg">3</div>
+          <p><strong class="text-slate-800">Smartboard Controls:</strong> Tap <strong class="text-emerald-600">+1 Marble</strong> or <strong class="text-brand-teal">+5 Burst</strong> for quick classroom additions.</p>
+        </div>
+        <div class="flex gap-3 items-start">
+          <div class="bg-rose-100 text-brand-coral rounded-xl p-2 font-bold text-lg">4</div>
+          <p><strong class="text-slate-800">Reward Celebration:</strong> Reach your goal target to trigger victory fanfare audio and celebratory confetti!</p>
+        </div>
+      </div>
+
+      <div class="mt-6 text-center">
+        <button id="close-info-btn" class="bg-brand-yellow hover:bg-yellow-400 text-slate-900 font-bold px-8 py-2.5 rounded-2xl font-fredoka shadow-md">Got It!</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas roundRect Polyfill for browser compatibility
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radii) {
+        if (typeof radii === 'number') radii = [radii];
+        const r = radii ? radii[0] || 0 : 0;
+        this.beginPath();
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // App State Management
+    const state = {
+      count: 0,
+      goal: 50,
+      rewardTitle: "Pizza Party! 🍕",
+      palette: "rainbow",
+      soundMuted: false,
+      volume: 0.8,
+      hasCelebrated: false
+    };
+
+    // Color Palettes
+    const PALETTES = {
+      rainbow: ['#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#845EC2', '#FF96AD'],
+      cosmic: ['#845EC2', '#D65DB1', '#FF6F91', '#FF9671', '#FFC75F', '#4D80E4'],
+      candy: ['#FF9AA2', '#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA'],
+      ocean: ['#0077B6', '#0096C7', '#00B4D8', '#48CAE4', '#90E0EF', '#06D6A0']
+    };
+
+    // Web Audio Synthesizer
+    class SoundManager {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        this.volume = 0.8;
+        this.lastSoundTime = 0;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playClink(intensity = 1) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        if (now - this.lastSoundTime < 0.035) return;
+        this.lastSoundTime = now;
+
+        const vol = Math.min(Math.max(intensity, 0.1), 1) * this.volume;
+        const baseFreq = 1600 + Math.random() * 800;
+
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gainNode = this.ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(baseFreq, now);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(baseFreq * 1.85, now);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(baseFreq * 1.2, now);
+        filter.Q.setValueAtTime(8, now);
+
+        gainNode.gain.setValueAtTime(vol * 0.5, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.14);
+        osc2.stop(now + 0.14);
+      }
+
+      playDrop() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(380, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.09);
+
+        gain.gain.setValueAtTime(0.3 * this.volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.11);
+      }
+
+      playFanfare() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.35 * this.volume, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.5);
+          }, idx * 110);
+        });
+      }
+    }
+
+    const soundMgr = new SoundManager();
+
+    // Matter.js Physics & Canvas Rendering
+    const Engine = Matter.Engine,
+          Bodies = Matter.Bodies,
+          Composite = Matter.Composite,
+          Vector = Matter.Vector,
+          Body = Matter.Body;
+
+    let engine, world;
+    let canvas, ctx;
+
+    const CANVAS_WIDTH = 500;
+    const CANVAS_HEIGHT = 650;
+    const MARBLE_RADIUS = 16;
+
+    // Glass Jar Dimensions & Boundary Coordinates
+    const JAR_CENTER_X = 250;
+    const JAR_BOTTOM_Y = 560;
+    const JAR_WIDTH = 320;
+    const JAR_HEIGHT = 380;
+    const JAR_CENTER_Y = JAR_BOTTOM_Y - (JAR_HEIGHT / 2);
+    const JAR_NECK_WIDTH = 210;
+    const JAR_NECK_Y = 190;
+
+    // Interactive Dragged Marble state
+    let draggedMarble = null;
+
+    function initPhysics() {
+      canvas = document.getElementById('physics-canvas');
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = CANVAS_HEIGHT;
+      ctx = canvas.getContext('2d');
+
+      engine = Engine.create({
+        gravity: { x: 0, y: 1.25 }
+      });
+      world = engine.world;
+
+      // Construct Rigid Boundaries for Glass Jar
+      createJarBoundaries();
+
+      // Sound Collision Listener
+      Matter.Events.on(engine, 'collisionStart', (evt) => {
+        evt.pairs.forEach(pair => {
+          const speedA = Vector.magnitude(pair.bodyA.velocity);
+          const speedB = Vector.magnitude(pair.bodyB.velocity);
+          const maxSpeed = Math.max(speedA, speedB);
+          if (maxSpeed > 1.2) {
+            soundMgr.playClink(maxSpeed / 8);
+          }
+        });
+      });
+
+      // Drag & Drop Mouse / Touch Listeners
+      setupCanvasDragListeners();
+
+      // Start 60fps Animation Loop
+      requestAnimationFrame(renderLoop);
+    }
+
+    function createJarBoundaries() {
+      const wallOpts = { 
+        isStatic: true, 
+        friction: 0.2, 
+        restitution: 0.35,
+        render: { visible: false } 
+      };
+
+      const jarParts = [];
+
+      // Jar Bottom Floor
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X, JAR_BOTTOM_Y + 10, JAR_WIDTH - 60, 30, wallOpts));
+
+      // Slanted Corners
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 35, JAR_BOTTOM_Y - 10, 90, 30, { ...wallOpts, angle: Math.PI / 5 }));
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 35, JAR_BOTTOM_Y - 10, 90, 30, { ...wallOpts, angle: -Math.PI / 5 }));
+
+      // Main Vertical Side Walls
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 10, JAR_CENTER_Y + 50, 30, 290, wallOpts));
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 10, JAR_CENTER_Y + 50, 30, 290, wallOpts));
+
+      // Slanted Upper Shoulders
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 38, JAR_NECK_Y + 45, 95, 30, { ...wallOpts, angle: -Math.PI / 4.5 }));
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 38, JAR_NECK_Y + 45, 95, 30, { ...wallOpts, angle: Math.PI / 4.5 }));
+
+      // Neck Lips Left & Right
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y - 10, 30, 80, wallOpts));
+      jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_NECK_WIDTH / 2) - 10, JAR_NECK_Y - 10, 30, 80, wallOpts));
+
+      // Outer Canvas Safety Walls
+      jarParts.push(Bodies.rectangle(-30, CANVAS_HEIGHT / 2, 60, CANVAS_HEIGHT * 2, wallOpts));
+      jarParts.push(Bodies.rectangle(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2, 60, CANVAS_HEIGHT * 2, wallOpts));
+      jarParts.push(Bodies.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT + 40, CANVAS_WIDTH * 2, 80, wallOpts));
+
+      Composite.add(world, jarParts);
+    }
+
+    // Main Custom Animation & Drawing Loop
+    function renderLoop() {
+      // Step Physics Simulation
+      Engine.update(engine, 1000 / 60);
+
+      // Clear Canvas
+      ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // Layer 1: Back Wooden Base & Soft Glass Tint
+      drawJarBackground();
+
+      // Layer 2: All Physics Marbles
+      drawMarbles();
+
+      // Layer 3: Glass Reflections & Rim Highlights
+      drawJarForegroundGlass();
+
+      // Layer 4: Top Dispenser Tray & Ghost Drag Line
+      drawDispenserTray();
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    // Draw Jar Rear Shadow & Base
+    function drawJarBackground() {
+      ctx.save();
+
+      // Wooden Stand Base
+      ctx.fillStyle = '#D4A373';
+      ctx.beginPath();
+      ctx.roundRect(JAR_CENTER_X - (JAR_WIDTH / 2) - 12, JAR_BOTTOM_Y + 16, JAR_WIDTH + 24, 26, 13);
+      ctx.fill();
+      ctx.fillStyle = '#FAEDCD';
+      ctx.beginPath();
+      ctx.roundRect(JAR_CENTER_X - (JAR_WIDTH / 2) - 6, JAR_BOTTOM_Y + 18, JAR_WIDTH + 12, 8, 4);
+      ctx.fill();
+
+      // Glass Inner Back Tint
+      ctx.beginPath();
+      ctx.moveTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
+      ctx.lineTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y + 20);
+      ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_NECK_Y + 70);
+      ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_BOTTOM_Y - 30);
+      ctx.quadraticCurveTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_BOTTOM_Y + 15, JAR_CENTER_X - 60, JAR_BOTTOM_Y + 15);
+      ctx.lineTo(JAR_CENTER_X + 60, JAR_BOTTOM_Y + 15);
+      ctx.quadraticCurveTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_BOTTOM_Y + 15, JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_BOTTOM_Y - 30);
+      ctx.lineTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_NECK_Y + 70);
+      ctx.lineTo(JAR_CENTER_X + (JAR_NECK_WIDTH / 2) - 10, JAR_NECK_Y + 20);
+      ctx.lineTo(JAR_CENTER_X + (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
+
+      const glassGrad = ctx.createLinearGradient(0, 100, 0, 580);
+      glassGrad.addColorStop(0, 'rgba(224, 242, 254, 0.25)');
+      glassGrad.addColorStop(0.5, 'rgba(186, 230, 253, 0.12)');
+      glassGrad.addColorStop(1, 'rgba(125, 211, 252, 0.3)');
+
+      ctx.fillStyle = glassGrad;
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Draw Marbles inside jar
+    function drawMarbles() {
+      const bodies = Composite.allBodies(world);
+
+      bodies.forEach(body => {
+        if (body.label === 'marble') {
+          const { x, y } = body.position;
+          const radius = body.circleRadius || MARBLE_RADIUS;
+          const color = body.marbleColor || '#FF6B6B';
+          const angle = body.angle || 0;
+
+          drawGlossySphere(x, y, radius, color, angle);
+        }
+      });
+    }
+
+    // Render 3D Shiny Glass Marble
+    function drawGlossySphere(x, y, radius, colorHex, angle = 0) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Shadow Under Marble
+      ctx.beginPath();
+      ctx.arc(2, 3, radius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fill();
+
+      // Sphere Main Radial Gradient
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+
+      const grad = ctx.createRadialGradient(
+        -radius * 0.35, -radius * 0.35, radius * 0.1,
+        0, 0, radius
+      );
+      grad.addColorStop(0, '#FFFFFF');
+      grad.addColorStop(0.25, colorHex);
+      grad.addColorStop(0.85, adjustColor(colorHex, -35));
+      grad.addColorStop(1, adjustColor(colorHex, -65));
+
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Inner Glass Swirl Pattern
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, radius * 0.65, radius * 0.28, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fill();
+
+      // Top Specular Reflection Dot
+      ctx.rotate(-angle);
+      ctx.beginPath();
+      ctx.arc(-radius * 0.32, -radius * 0.32, radius * 0.32, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.fill();
+
+      // Bottom Soft Bounce Highlight
+      ctx.beginPath();
+      ctx.arc(radius * 0.25, radius * 0.25, radius * 0.2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Draw Front Specular Highlights & Glass Rim
+    function drawJarForegroundGlass() {
+      ctx.save();
+
+      // Glass Outer Outline
+      ctx.beginPath();
+      ctx.moveTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
+      ctx.lineTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y + 20);
+      ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_NECK_Y + 70);
+      ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_BOTTOM_Y - 30);
+      ctx.quadraticCurveTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 5, JAR_BOTTOM_Y + 15, JAR_CENTER_X - 60, JAR_BOTTOM_Y + 15);
+      ctx.lineTo(JAR_CENTER_X + 60, JAR_BOTTOM_Y + 15);
+      ctx.quadraticCurveTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_BOTTOM_Y + 15, JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_BOTTOM_Y - 30);
+      ctx.lineTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 5, JAR_NECK_Y + 70);
+      ctx.lineTo(JAR_CENTER_X + (JAR_NECK_WIDTH / 2) - 10, JAR_NECK_Y + 20);
+      ctx.lineTo(JAR_CENTER_X + (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Diagonal Specular Reflection Line
+      ctx.beginPath();
+      ctx.moveTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 22, JAR_NECK_Y + 80);
+      ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 22, JAR_BOTTOM_Y - 35);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 9;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 22, JAR_NECK_Y + 90);
+      ctx.lineTo(JAR_CENTER_X + (JAR_WIDTH / 2) - 22, JAR_BOTTOM_Y - 70);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Open Glass Rim Oval at Neck
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.beginPath();
+      ctx.ellipse(JAR_CENTER_X, JAR_NECK_Y - 40, (JAR_NECK_WIDTH / 2) + 6, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.9)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Render Dispenser Tray at Top
+    function drawDispenserTray() {
+      ctx.save();
+      
+      // Tray Container
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.roundRect(80, 15, 340, 60, 30);
+      ctx.fill();
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Tray Header Label
+      ctx.font = 'bold 11px Quicksand, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'center';
+      ctx.fillText('DISPENSER TRAY - DRAG TO DROP', JAR_CENTER_X, 30);
+
+      // Sample Marbles sitting in tray
+      const palette = PALETTES[state.palette];
+      const trayPositions = [125, 187, 250, 313, 375];
+      trayPositions.forEach((xPos, idx) => {
+        drawGlossySphere(xPos, 50, MARBLE_RADIUS, palette[idx % palette.length], 0);
+      });
+
+      // Draw Trajectory line if marble is being dragged
+      if (draggedMarble) {
+        const { x, y } = draggedMarble.position;
+        ctx.beginPath();
+        ctx.setLineDash([6, 6]);
+        ctx.moveTo(x, y);
+        ctx.lineTo(JAR_CENTER_X, JAR_NECK_Y - 30);
+        ctx.strokeStyle = 'rgba(78, 205, 196, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+    }
+
+    function adjustColor(hex, percent) {
+      let num = parseInt(hex.replace('#', ''), 16),
+          amt = Math.round(2.55 * percent),
+          R = (num >> 16) + amt,
+          G = (num >> 8 & 0x00FF) + amt,
+          B = (num & 0x0000FF) + amt;
+      return '#' + (0x1000000 + (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 + (B < 255 ? (B < 1 ? 0 : B) : 255)).toString(16).slice(1);
+    }
+
+    // Converts Mouse/Touch Event coordinates to Canvas 500x650 coordinate space
+    function getCanvasPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
+      const clientX = touch ? touch.clientX : 0;
+      const clientY = touch ? touch.clientY : 0;
+      return {
+        x: Math.max(0, Math.min(CANVAS_WIDTH, (clientX - rect.left) * (CANVAS_WIDTH / rect.width))),
+        y: Math.max(0, Math.min(CANVAS_HEIGHT, (clientY - rect.top) * (CANVAS_HEIGHT / rect.height)))
+      };
+    }
+
+    // Touch & Mouse Drag Handlers
+    function setupCanvasDragListeners() {
+      const handleDown = (e) => {
+        const pos = getCanvasPos(e);
+
+        // 1. Check if user clicked in top Dispenser Tray (Y < 90)
+        if (pos.y < 95) {
+          e.preventDefault();
+          soundMgr.init();
+          
+          // Spawn temporary static marble following cursor
+          const palette = PALETTES[state.palette];
+          const color = palette[Math.floor(Math.random() * palette.length)];
+
+          const marble = Bodies.circle(pos.x, pos.y, MARBLE_RADIUS, {
+            isStatic: true,
+            restitution: 0.45,
+            friction: 0.15,
+            density: 0.002,
+            label: 'marble',
+            render: { visible: false }
+          });
+          marble.marbleColor = color;
+          Composite.add(world, marble);
+
+          draggedMarble = marble;
+          soundMgr.playDrop();
+          return;
+        }
+
+        // 2. Check if user clicked an existing marble inside jar
+        const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
+        for (let m of marbles) {
+          const dx = pos.x - m.position.x;
+          const dy = pos.y - m.position.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= MARBLE_RADIUS * 1.5) {
+            e.preventDefault();
+            soundMgr.init();
+            draggedMarble = m;
+            Body.setStatic(draggedMarble, true);
+            return;
+          }
+        }
+
+        // 3. If user clicked near open jar neck mouth, spawn a marble!
+        if (pos.y >= 95 && pos.y <= JAR_NECK_Y + 20 && Math.abs(pos.x - JAR_CENTER_X) < JAR_NECK_WIDTH) {
+          e.preventDefault();
+          spawnMarbleAt(pos.x, pos.y);
+        }
+      };
+
+      const handleMove = (e) => {
+        if (!draggedMarble) return;
+        e.preventDefault();
+        const pos = getCanvasPos(e);
+        Body.setPosition(draggedMarble, { x: pos.x, y: pos.y });
+        Body.setVelocity(draggedMarble, { x: 0, y: 0 });
+      };
+
+      const handleUp = (e) => {
+        if (!draggedMarble) return;
+        e.preventDefault();
+        
+        Body.setStatic(draggedMarble, false);
+        // Give subtle initial drop velocity
+        Body.setVelocity(draggedMarble, { 
+          x: (Math.random() - 0.5) * 2, 
+          y: 2 + Math.random() * 2 
+        });
+
+        soundMgr.playDrop();
+        draggedMarble = null;
+
+        state.count = getMarbleCount();
+        updateUI();
+        checkGoalReached();
+      };
+
+      canvas.addEventListener('mousedown', handleDown);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleUp);
+
+      canvas.addEventListener('touchstart', handleDown, { passive: false });
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleUp, { passive: false });
+    }
+
+    // Spawn marble at position
+    function spawnMarbleAt(x, y, playAudio = true) {
+      const palette = PALETTES[state.palette];
+      const randomColor = palette[Math.floor(Math.random() * palette.length)];
+
+      const marble = Bodies.circle(x, y, MARBLE_RADIUS, {
+        restitution: 0.45,
+        friction: 0.15,
+        density: 0.002,
+        label: 'marble',
+        render: { visible: false }
+      });
+
+      marble.marbleColor = randomColor;
+      Composite.add(world, marble);
+
+      state.count = getMarbleCount();
+      updateUI();
+
+      if (playAudio) {
+        soundMgr.playDrop();
+      }
+
+      checkGoalReached();
+    }
+
+    function addMarble(count = 1) {
+      soundMgr.init();
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const spawnX = JAR_CENTER_X + (Math.random() * 60 - 30);
+          const spawnY = JAR_NECK_Y - 50 - (i * 12);
+          spawnMarbleAt(spawnX, spawnY, true);
+        }, i * 110);
+      }
+    }
+
+    function removeMarble() {
+      const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
+      if (marbles.length > 0) {
+        // Find topmost marble
+        const topMarble = marbles.reduce((highest, current) => current.position.y < highest.position.y ? current : highest, marbles[0]);
+        Composite.remove(world, topMarble);
+        state.count = getMarbleCount();
+        updateUI();
+        soundMgr.playClink(0.4);
+      }
+    }
+
+    function getMarbleCount() {
+      return Composite.allBodies(world).filter(b => b.label === 'marble').length;
+    }
+
+    function emptyJar() {
+      const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
+      marbles.forEach(m => Composite.remove(world, m));
+      state.count = 0;
+      state.hasCelebrated = false;
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('current-count').innerText = state.count;
+      document.getElementById('goal-target').innerText = state.goal;
+      document.getElementById('reward-title-display').innerText = state.rewardTitle;
+
+      const remaining = Math.max(state.goal - state.count, 0);
+      const remainingPill = document.getElementById('remaining-count');
+      if (remaining === 0) {
+        remainingPill.innerText = "GOAL REACHED!";
+        remainingPill.className = "text-sm font-extrabold text-emerald-600 bg-emerald-100 px-3 py-1 rounded-xl border border-emerald-200 animate-pulse";
+      } else {
+        remainingPill.innerText = `${remaining} left`;
+        remainingPill.className = "text-lg font-bold text-brand-coral bg-rose-50 px-3 py-1 rounded-xl border border-rose-100 inline-block";
+      }
+
+      const percent = Math.min(Math.round((state.count / state.goal) * 100), 100);
+      document.getElementById('percent-display').innerText = `${percent}%`;
+      document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+
+      const badge = document.getElementById('completion-badge');
+      if (percent >= 100) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      saveLocalState();
+    }
+
+    function checkGoalReached() {
+      if (state.count >= state.goal && !state.hasCelebrated) {
+        state.hasCelebrated = true;
+        soundMgr.playFanfare();
+
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 130, spread: 90, origin: { y: 0.6 } });
+          setTimeout(() => {
+            confetti({ particleCount: 90, angle: 60, spread: 55, origin: { x: 0 } });
+            confetti({ particleCount: 90, angle: 120, spread: 55, origin: { x: 1 } });
+          }, 300);
+        }
+
+        setTimeout(() => {
+          document.getElementById('celebration-reward-name').innerText = state.rewardTitle;
+          document.getElementById('modal-celebration').classList.remove('hidden');
+        }, 750);
+      }
+    }
+
+    function saveLocalState() {
+      const data = {
+        count: state.count,
+        goal: state.goal,
+        rewardTitle: state.rewardTitle,
+        palette: state.palette,
+        soundMuted: soundMgr.muted,
+        volume: soundMgr.volume,
+        hasCelebrated: state.hasCelebrated
+      };
+      localStorage.setItem('digital_marble_jar_data', JSON.stringify(data));
+    }
+
+    function loadLocalState() {
+      const saved = localStorage.getItem('digital_marble_jar_data');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          state.goal = parsed.goal || 50;
+          state.rewardTitle = parsed.rewardTitle || "Pizza Party! 🍕";
+          state.palette = parsed.palette || "rainbow";
+          state.hasCelebrated = parsed.hasCelebrated || false;
+          soundMgr.muted = parsed.soundMuted || false;
+          soundMgr.volume = parsed.volume !== undefined ? parsed.volume : 0.8;
+
+          document.getElementById('setting-volume').value = soundMgr.volume * 100;
+          document.getElementById('volume-val').innerText = `${Math.round(soundMgr.volume * 100)}%`;
+          updateSoundIcon();
+
+          // Highlight saved palette button
+          document.querySelectorAll('.palette-btn').forEach(b => {
+            if (b.dataset.palette === state.palette) {
+              b.classList.add('border-brand-purple', 'scale-105');
+            } else {
+              b.classList.remove('border-brand-purple', 'scale-105');
+              b.classList.add('border-transparent');
+            }
+          });
+
+          const savedCount = parsed.count || 0;
+          for (let i = 0; i < savedCount; i++) {
+            const spawnX = JAR_CENTER_X + (Math.random() * 80 - 40);
+            const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
+            spawnMarbleAt(spawnX, spawnY, false);
+          }
+        } catch (e) {
+          console.error("Could not parse saved state", e);
+        }
+      } else {
+        // Default initial 5 marbles
+        for (let i = 0; i < 5; i++) {
+          spawnMarbleAt(JAR_CENTER_X + (Math.random() * 60 - 30), JAR_BOTTOM_Y - 30, false);
+        }
+      }
+      updateUI();
+    }
+
+    function updateSoundIcon() {
+      const icon = document.getElementById('sound-icon');
+      if (soundMgr.muted) {
+        icon.className = "fa-solid fa-volume-xmark text-slate-400";
+      } else {
+        icon.className = "fa-solid fa-volume-high text-brand-purple";
+      }
+    }
+
+    // Direct UI Setup (Guarantees buttons work regardless of physics)
+    function setupUIEvents() {
+      // Action Buttons
+      document.getElementById('btn-add-1').onclick = () => addMarble(1);
+      document.getElementById('btn-add-5').onclick = () => addMarble(5);
+      document.getElementById('btn-sub-1').onclick = removeMarble;
+
+      // Empty Confirm Modal
+      document.getElementById('btn-empty-prompt').onclick = () => {
+        document.getElementById('modal-confirm-empty').classList.remove('hidden');
+      };
+      document.getElementById('cancel-empty').onclick = () => {
+        document.getElementById('modal-confirm-empty').classList.add('hidden');
+      };
+      document.getElementById('confirm-empty-btn').onclick = () => {
+        document.getElementById('modal-confirm-empty').classList.add('hidden');
+        emptyJar();
+      };
+
+      // Sound Mute Toggle
+      document.getElementById('btn-sound').onclick = () => {
+        soundMgr.muted = !soundMgr.muted;
+        updateSoundIcon();
+        saveLocalState();
+      };
+
+      // Settings Modal Open/Close
+      const modalSettings = document.getElementById('modal-settings');
+      document.getElementById('btn-settings').onclick = () => {
+        document.getElementById('setting-reward-title').value = state.rewardTitle;
+        document.getElementById('setting-goal-num').value = state.goal;
+        modalSettings.classList.remove('hidden');
+      };
+      document.getElementById('close-settings').onclick = () => modalSettings.classList.add('hidden');
+      document.getElementById('cancel-settings').onclick = () => modalSettings.classList.add('hidden');
+
+      // Save Settings
+      document.getElementById('save-settings').onclick = () => {
+        const newTitle = document.getElementById('setting-reward-title').value.trim();
+        const newGoal = parseInt(document.getElementById('setting-goal-num').value, 10);
+        if (newTitle) state.rewardTitle = newTitle;
+        if (newGoal && newGoal > 0) state.goal = newGoal;
+
+        modalSettings.classList.add('hidden');
+        updateUI();
+      };
+
+      // Quick Reward Presets
+      document.querySelectorAll('.preset-title-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          document.getElementById('setting-reward-title').value = e.currentTarget.dataset.title;
+        };
+      });
+
+      // Volume Slider
+      document.getElementById('setting-volume').oninput = (e) => {
+        const val = parseInt(e.target.value, 10);
+        soundMgr.volume = val / 100;
+        document.getElementById('volume-val').innerText = `${val}%`;
+      };
+
+      // Info Modal
+      const modalInfo = document.getElementById('modal-info');
+      document.getElementById('btn-info').onclick = () => modalInfo.classList.remove('hidden');
+      document.getElementById('close-info').onclick = () => modalInfo.classList.add('hidden');
+      document.getElementById('close-info-btn').onclick = () => modalInfo.classList.add('hidden');
+
+      // Fullscreen Toggle
+      document.getElementById('btn-fullscreen').onclick = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+        }
+      };
+
+      // Celebration Actions
+      document.getElementById('btn-celebrate-keep').onclick = () => {
+        document.getElementById('modal-celebration').classList.add('hidden');
+      };
+      document.getElementById('btn-celebrate-reset').onclick = () => {
+        document.getElementById('modal-celebration').classList.add('hidden');
+        emptyJar();
+      };
+
+      // Palette selector
+      document.querySelectorAll('.palette-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          const targetBtn = e.currentTarget;
+          state.palette = targetBtn.dataset.palette;
+
+          document.querySelectorAll('.palette-btn').forEach(b => {
+            b.classList.remove('border-brand-purple', 'scale-105');
+            b.classList.add('border-transparent');
+          });
+          targetBtn.classList.add('border-brand-purple', 'scale-105');
+
+          saveLocalState();
+        };
+      });
+    }
+
+    window.onload = function() {
+      setupUIEvents();
+      try {
+        initPhysics();
+        loadLocalState();
+      } catch (err) {
+        console.error("Physics initialization error:", err);
+      }
+    };
+  </script>
+</body>
+</html>

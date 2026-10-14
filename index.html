@@ -79,22 +79,22 @@
       background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 4px solid rgba(255, 255, 255, 0.85);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+      border: 3px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
     }
 
     .btn-tactile {
       transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
       touch-action: manipulation;
     }
     .btn-tactile:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
     }
     .btn-tactile:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
     }
 
     #physics-canvas {
@@ -111,154 +111,155 @@
     }
   </style>
 </head>
-<body class="bg-polka text-slate-800 min-h-screen flex flex-col justify-between p-3 md:p-6">
+<body class="bg-polka text-slate-800 min-h-screen flex flex-col justify-between p-2 sm:p-4 lg:p-5">
 
   <!-- Top Navigation Header -->
-  <header class="max-w-6xl mx-auto w-full flex flex-wrap items-center justify-between gap-4 mb-3">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-yellow via-brand-coral to-brand-purple flex items-center justify-center text-white text-2xl shadow-lg animate-bounce-gentle">
+  <header class="max-w-6xl mx-auto w-full flex flex-wrap items-center justify-between gap-2.5 mb-2 sm:mb-3">
+    <div class="flex items-center gap-2.5">
+      <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-brand-yellow via-brand-coral to-brand-purple flex items-center justify-center text-white text-xl shadow-md animate-bounce-gentle">
         <i class="fa-solid fa-jar"></i>
       </div>
       <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-blue via-brand-purple to-brand-coral tracking-wide">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-blue via-brand-purple to-brand-coral tracking-wide leading-none">
           Classroom Marble Jar
         </h1>
-        <p class="text-xs md:text-sm font-quicksand font-bold text-slate-500">Collect marbles for great behavior & unlock class rewards!</p>
+        <p class="text-[11px] sm:text-xs font-quicksand font-bold text-slate-500 mt-0.5">Collect marbles for great behavior & unlock class rewards!</p>
       </div>
     </div>
 
+    <!-- Active Class Selector Bar -->
+    <div class="flex items-center gap-1.5 bg-white/90 backdrop-blur border-2 border-brand-teal/50 rounded-2xl p-1 shadow-sm">
+      <i class="fa-solid fa-users text-brand-purple text-base ml-1.5"></i>
+      <select id="class-select" class="bg-transparent font-fredoka font-bold text-slate-800 text-xs sm:text-sm focus:outline-none cursor-pointer pr-1">
+        <!-- Dynamically populated class options -->
+      </select>
+      <button id="btn-add-class" title="Add New Class" class="btn-tactile bg-brand-purple hover:bg-purple-700 text-white px-2.5 py-1 rounded-xl text-xs font-bold font-quicksand flex items-center gap-1">
+        <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">New Class</span>
+      </button>
+      <button id="btn-delete-class" title="Delete Active Class" class="text-slate-400 hover:text-rose-500 p-1 rounded-lg text-xs transition-colors">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    </div>
+
     <!-- Top Utility Controls -->
-    <div class="flex items-center gap-2">
-      <!-- Fullscreen Button -->
-      <button id="btn-fullscreen" title="Toggle Fullscreen" class="btn-tactile bg-white text-slate-700 hover:bg-slate-50 p-3 rounded-2xl text-lg font-bold border-2 border-slate-100">
+    <div class="flex items-center gap-1.5">
+      <button id="btn-fullscreen" title="Toggle Fullscreen" class="btn-tactile bg-white text-slate-700 hover:bg-slate-50 p-2 sm:p-2.5 rounded-xl text-base font-bold border-2 border-slate-100">
         <i class="fa-solid fa-expand"></i>
       </button>
 
-      <!-- Mute Toggle -->
-      <button id="btn-sound" title="Toggle Sound" class="btn-tactile bg-white text-brand-purple hover:bg-slate-50 p-3 rounded-2xl text-lg font-bold border-2 border-purple-100 flex items-center gap-2">
+      <button id="btn-sound" title="Toggle Sound" class="btn-tactile bg-white text-brand-purple hover:bg-slate-50 p-2 sm:p-2.5 rounded-xl text-base font-bold border-2 border-purple-100 flex items-center gap-1.5">
         <i id="sound-icon" class="fa-solid fa-volume-high"></i>
         <span class="text-xs hidden sm:inline font-quicksand font-bold">Sound</span>
       </button>
 
-      <!-- Settings Button -->
-      <button id="btn-settings" title="Jar Settings" class="btn-tactile bg-brand-teal text-white hover:bg-teal-500 p-3 rounded-2xl text-lg font-bold flex items-center gap-2">
+      <button id="btn-settings" title="Jar Settings" class="btn-tactile bg-brand-teal text-white hover:bg-teal-500 p-2 sm:p-2.5 rounded-xl text-base font-bold flex items-center gap-1.5">
         <i class="fa-solid fa-gear"></i>
         <span class="text-xs hidden sm:inline font-quicksand font-bold">Settings</span>
       </button>
 
-      <!-- Guide / Info -->
-      <button id="btn-info" title="How to Play" class="btn-tactile bg-brand-yellow text-slate-800 hover:bg-yellow-400 p-3 rounded-2xl text-lg font-bold">
+      <button id="btn-info" title="How to Play" class="btn-tactile bg-brand-yellow text-slate-800 hover:bg-yellow-400 p-2 sm:p-2.5 rounded-xl text-base font-bold">
         <i class="fa-solid fa-circle-question"></i>
       </button>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1">
+  <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 lg:gap-5 items-start flex-1">
 
     <!-- LEFT COLUMN: Goal Banner, Progress & Buttons -->
-    <section class="lg:col-span-5 flex flex-col gap-5">
+    <section class="lg:col-span-5 flex flex-col gap-3">
 
       <!-- GOAL TRACKER CARD -->
-      <div class="glass-card rounded-3xl p-5 md:p-6 border-4 border-white shadow-xl relative overflow-hidden">
-        <div class="flex items-center justify-between mb-3">
-          <span class="bg-gradient-to-r from-brand-purple to-indigo-600 text-white text-xs md:text-sm font-bold uppercase px-3.5 py-1 rounded-full shadow-sm tracking-wider flex items-center gap-1.5">
+      <div class="glass-card rounded-2xl p-3.5 sm:p-4 border-3 border-white shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between mb-2">
+          <span class="bg-gradient-to-r from-brand-purple to-indigo-600 text-white text-[10px] sm:text-xs font-bold uppercase px-2.5 py-0.5 rounded-full shadow-sm tracking-wider flex items-center gap-1">
             <i class="fa-solid fa-trophy text-yellow-300"></i> Target Reward
           </span>
-          <span id="completion-badge" class="hidden bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+          <span id="completion-badge" class="hidden bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
             🎉 UNLOCKED!
           </span>
         </div>
 
-        <!-- Reward Title Display -->
-        <h2 id="reward-title-display" class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-4 tracking-tight leading-tight">
-          Pizza Party! 🍕
+        <h2 id="reward-title-display" class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-2.5 tracking-tight leading-tight">
+          Choice time in Clever 💻
         </h2>
 
-        <!-- Progress Bar -->
-        <div class="space-y-2 mb-4">
-          <div class="flex justify-between items-baseline text-sm font-quicksand font-bold">
+        <div class="space-y-1 mb-3">
+          <div class="flex justify-between items-baseline text-xs font-quicksand font-bold">
             <span class="text-slate-500">Progress</span>
-            <span id="percent-display" class="text-brand-purple font-black text-base">0%</span>
+            <span id="percent-display" class="text-brand-purple font-black text-sm">0%</span>
           </div>
 
-          <div class="w-full bg-slate-200/90 h-7 rounded-2xl p-1 shadow-inner relative overflow-hidden border border-slate-300/60">
-            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-brand-teal via-brand-yellow to-brand-coral rounded-xl transition-all duration-500 ease-out shadow-md relative" style="width: 0%;">
-              <div class="absolute inset-0 bg-white/25 animate-pulse rounded-xl"></div>
+          <div class="w-full bg-slate-200/90 h-5 sm:h-6 rounded-xl p-0.5 shadow-inner relative overflow-hidden border border-slate-300/60">
+            <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-brand-teal via-brand-yellow to-brand-coral rounded-lg transition-all duration-500 ease-out shadow-md relative" style="width: 0%;">
+              <div class="absolute inset-0 bg-white/25 animate-pulse rounded-lg"></div>
             </div>
           </div>
         </div>
 
-        <!-- Big Number Counter Box -->
-        <div class="bg-white/95 rounded-2xl p-4 border-2 border-slate-100 flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-bold">
+        <div class="bg-white/95 rounded-xl p-2.5 border-2 border-slate-100 flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold">
               🔮
             </div>
             <div>
-              <p class="text-xs text-slate-400 font-bold uppercase font-quicksand">Marbles In Jar</p>
-              <p class="text-3xl font-black text-slate-800 tracking-tight">
+              <p class="text-[10px] text-slate-400 font-bold uppercase font-quicksand">Marbles In Jar</p>
+              <p class="text-2xl font-black text-slate-800 tracking-tight leading-none">
                 <span id="current-count" class="text-brand-teal">0</span>
-                <span class="text-slate-300 font-normal">/</span>
-                <span id="goal-target" class="text-slate-500 text-2xl">50</span>
+                <span class="text-slate-300 font-normal text-xl">/</span>
+                <span id="goal-target" class="text-slate-500 text-lg">50</span>
               </p>
             </div>
           </div>
 
           <div class="text-right">
-            <span class="text-xs text-slate-400 font-bold block font-quicksand">To Goal</span>
-            <span id="remaining-count" class="text-lg font-bold text-brand-coral bg-rose-50 px-3 py-1 rounded-xl border border-rose-100 inline-block">50 left</span>
+            <span class="text-[10px] text-slate-400 font-bold block font-quicksand">To Goal</span>
+            <span id="remaining-count" class="text-xs sm:text-sm font-bold text-brand-coral bg-rose-50 px-2.5 py-0.5 rounded-lg border border-rose-100 inline-block">50 left</span>
           </div>
         </div>
       </div>
 
       <!-- SMARTBOARD ACTION CONTROLS -->
-      <div class="glass-card rounded-3xl p-5 border-4 border-white shadow-xl space-y-3">
+      <div class="glass-card rounded-2xl p-3 sm:p-3.5 border-3 border-white shadow-lg space-y-2">
         <div class="flex items-center justify-between">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-quicksand">
+          <h3 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-quicksand">
             Smartboard Quick Actions
           </h3>
-          <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md">
-            <i class="fa-solid fa-hand-pointer mr-1"></i> Tap or Drag
+          <span class="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+            <i class="fa-solid fa-hand-pointer mr-0.5"></i> Tap or Drag
           </span>
         </div>
 
-        <!-- Primary Add Buttons -->
-        <div class="grid grid-cols-2 gap-3">
-          <button id="btn-add-1" class="btn-tactile bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-white font-bold text-lg py-3.5 px-4 rounded-2xl border-2 border-emerald-300 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-circle-plus text-xl"></i> +1 Marble
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btn-add-1" class="btn-tactile bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-white font-bold text-base sm:text-lg py-2.5 px-3 rounded-xl border-2 border-emerald-300 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-circle-plus text-lg"></i> +1 Marble
           </button>
 
-          <button id="btn-add-5" class="btn-tactile bg-gradient-to-b from-brand-teal to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-bold text-lg py-3.5 px-4 rounded-2xl border-2 border-teal-300 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-xl"></i> +5 Burst
+          <button id="btn-add-5" class="btn-tactile bg-gradient-to-b from-brand-teal to-cyan-600 hover:from-teal-400 hover:to-cyan-500 text-white font-bold text-base sm:text-lg py-2.5 px-3 rounded-xl border-2 border-teal-300 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i> +5 Burst
           </button>
         </div>
 
-        <!-- Secondary Buttons -->
-        <div class="grid grid-cols-2 gap-3">
-          <button id="btn-sub-1" class="btn-tactile bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-white font-bold text-md py-2.5 px-3 rounded-2xl border-2 border-amber-200 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-minus text-sm"></i> -1 Marble
-          </button>
-
-          <button id="btn-empty-prompt" class="btn-tactile bg-gradient-to-b from-rose-400 to-rose-500 hover:from-rose-300 hover:to-rose-400 text-white font-bold text-md py-2.5 px-3 rounded-2xl border-2 border-rose-200 flex items-center justify-center gap-2">
-            <i class="fa-solid fa-rotate-left text-sm"></i> Clear Jar
+        <div>
+          <button id="btn-sub-1" class="btn-tactile w-full bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-white font-bold text-xs sm:text-sm py-2 px-2.5 rounded-xl border-2 border-amber-200 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-minus text-xs"></i> -1 Marble
           </button>
         </div>
       </div>
 
       <!-- MARBLE COLOR THEME SELECTOR -->
-      <div class="glass-card rounded-3xl p-4 border-4 border-white shadow-xl">
-        <label class="text-xs font-bold uppercase tracking-wider text-slate-400 font-quicksand block mb-2">Marble Color Theme</label>
-        <div class="grid grid-cols-4 gap-2" id="palette-selector">
-          <button data-palette="rainbow" class="palette-btn border-2 border-brand-purple bg-gradient-to-r from-red-400 via-green-400 to-blue-400 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+      <div class="glass-card rounded-2xl p-2.5 sm:p-3 border-3 border-white shadow-lg">
+        <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-quicksand block mb-1.5">Marble Color Theme</label>
+        <div class="grid grid-cols-4 gap-1.5" id="palette-selector">
+          <button data-palette="rainbow" class="palette-btn border-2 border-brand-purple bg-gradient-to-r from-red-400 via-green-400 to-blue-400 p-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-white shadow-sm flex flex-col items-center gap-0.5 hover:scale-105 transition-transform">
             <span>🌈</span> Rainbow
           </button>
-          <button data-palette="cosmic" class="palette-btn border-2 border-transparent bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+          <button data-palette="cosmic" class="palette-btn border-2 border-transparent bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 p-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-white shadow-sm flex flex-col items-center gap-0.5 hover:scale-105 transition-transform">
             <span>✨</span> Cosmic
           </button>
-          <button data-palette="candy" class="palette-btn border-2 border-transparent bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-300 p-2 rounded-xl text-xs font-bold text-slate-800 shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+          <button data-palette="candy" class="palette-btn border-2 border-transparent bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-300 p-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-slate-800 shadow-sm flex flex-col items-center gap-0.5 hover:scale-105 transition-transform">
             <span>🍬</span> Candy
           </button>
-          <button data-palette="ocean" class="palette-btn border-2 border-transparent bg-gradient-to-r from-cyan-500 via-teal-400 to-blue-600 p-2 rounded-xl text-xs font-bold text-white shadow-sm flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+          <button data-palette="ocean" class="palette-btn border-2 border-transparent bg-gradient-to-r from-cyan-500 via-teal-400 to-blue-600 p-1.5 rounded-lg text-[10px] sm:text-xs font-bold text-white shadow-sm flex flex-col items-center gap-0.5 hover:scale-105 transition-transform">
             <span>🌊</span> Ocean
           </button>
         </div>
@@ -269,16 +270,14 @@
     <!-- RIGHT COLUMN: Interactive Canvas & Physics Stage -->
     <section class="lg:col-span-7 flex flex-col items-center justify-center w-full">
 
-      <div class="relative w-full max-w-[500px] mx-auto flex flex-col items-center">
+      <div class="relative w-full max-w-[420px] lg:max-w-[440px] mx-auto flex flex-col items-center">
         
-        <!-- Drag Ribbon Helper Banner -->
-        <div class="mb-3 bg-white/95 backdrop-blur border-2 border-brand-teal/50 px-5 py-2 rounded-full shadow-md text-xs sm:text-sm font-extrabold text-brand-blue flex items-center gap-2 animate-bounce-gentle">
-          <i class="fa-solid fa-hand-pointer text-brand-coral text-base animate-pulse"></i>
+        <div class="mb-2 bg-white/95 backdrop-blur border-2 border-brand-teal/50 px-4 py-1.5 rounded-full shadow-sm text-xs font-extrabold text-brand-blue flex items-center gap-1.5 animate-bounce-gentle">
+          <i class="fa-solid fa-hand-pointer text-brand-coral text-sm animate-pulse"></i>
           <span>Drag marbles from top tray down into jar!</span>
         </div>
 
-        <!-- Canvas Container -->
-        <div class="w-full relative rounded-3xl overflow-hidden glass-card border-8 border-white/90 shadow-2xl bg-gradient-to-b from-sky-100/60 via-sky-50/30 to-amber-50/40">
+        <div class="w-full relative rounded-2xl overflow-hidden glass-card border-4 sm:border-6 border-white/90 shadow-xl bg-gradient-to-b from-sky-100/60 via-sky-50/30 to-amber-50/40">
           <canvas id="physics-canvas" class="w-full block z-10 aspect-[5/6.5]"></canvas>
         </div>
       </div>
@@ -300,37 +299,43 @@
       </div>
 
       <div class="space-y-4 font-quicksand">
-        <!-- Edit Reward Title -->
         <div>
           <label class="block text-sm font-bold text-slate-700 mb-1">Class Reward Title</label>
-          <input type="text" id="setting-reward-title" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-teal" placeholder="e.g. Pizza Party 🍕">
+          <input type="text" id="setting-reward-title" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-teal" placeholder="e.g. Choice time in Clever 💻">
         </div>
 
-        <!-- Quick Presets -->
         <div>
           <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reward Presets</label>
           <div class="grid grid-cols-2 gap-2 text-xs font-bold">
-            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Pizza Party! 🍕">🍕 Pizza Party!</button>
-            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Extra Recess! 🛝">🛝 Extra Recess!</button>
-            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Movie & Popcorn 🍿">🍿 Movie Night</button>
-            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Pajama Day! 🛏️">🛏️ Pajama Day!</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="This Is Sand 🏖️">🏖️ This Is Sand</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Free Build with Legos 🧱">🧱 Free Build Legos</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="iPad time 📱">📱 iPad Time</button>
+            <button class="preset-title-btn bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-brand-teal p-2.5 rounded-xl text-left transition-colors" data-title="Choice time in Clever 💻">💻 Choice in Clever</button>
           </div>
         </div>
 
-        <!-- Target Marble Goal -->
         <div>
           <label class="block text-sm font-bold text-slate-700 mb-1">Marble Goal Target</label>
           <input type="number" id="setting-goal-num" min="5" max="200" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-teal" value="50">
-          <p class="text-xs text-slate-400 mt-1">Holds up to 100+ marbles comfortably</p>
+          <p class="text-xs text-slate-400 mt-1">Holds up to 50+ marbles comfortably</p>
         </div>
 
-        <!-- Volume slider -->
         <div>
           <div class="flex justify-between items-center mb-1">
             <label class="text-sm font-bold text-slate-700">Sound Volume</label>
             <span id="volume-val" class="text-xs font-bold text-brand-purple">80%</span>
           </div>
           <input type="range" id="setting-volume" min="0" max="100" value="80" class="w-full accent-brand-purple cursor-pointer">
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-slate-700">Reset Jar Progress</p>
+            <p class="text-[11px] text-slate-400">Empties all marbles from active jar</p>
+          </div>
+          <button id="btn-settings-clear" class="btn-tactile bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-trash-can"></i> Clear Jar
+          </button>
         </div>
       </div>
 
@@ -354,6 +359,55 @@
     </div>
   </div>
 
+  <!-- ADD CLASS MODAL -->
+  <div id="modal-add-class" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-4 border-brand-purple animate-pop font-quicksand">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-2xl font-extrabold text-slate-800 font-fredoka flex items-center gap-2">
+          <i class="fa-solid fa-users-rectangle text-brand-purple"></i> Add New Class Profile
+        </h3>
+        <button id="close-add-class" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Class Name</label>
+          <input type="text" id="new-class-name" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-purple" placeholder="e.g. Period 2 - Science 🔬">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Reward Title</label>
+          <input type="text" id="new-class-reward" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-purple" placeholder="e.g. Choice time in Clever 💻" value="Choice time in Clever 💻">
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">Marble Goal Target</label>
+          <input type="number" id="new-class-goal" min="5" max="200" value="50" class="w-full bg-slate-100 border-2 border-slate-200 rounded-2xl px-4 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-brand-purple">
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 font-fredoka">
+        <button id="cancel-add-class" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-2xl">Cancel</button>
+        <button id="save-new-class" class="bg-brand-purple hover:bg-purple-700 text-white font-bold px-6 py-2.5 rounded-2xl shadow-lg btn-tactile">Create Class</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRM DELETE CLASS MODAL -->
+  <div id="modal-confirm-delete-class" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border-4 border-rose-500 animate-pop text-center font-quicksand">
+      <div class="text-4xl mb-2">🗑</div>
+      <h3 class="text-xl font-bold text-slate-800 mb-2 font-fredoka">Delete Class?</h3>
+      <p id="delete-class-confirm-msg" class="text-sm text-slate-500 mb-5">Are you sure you want to delete this class and all its marble progress?</p>
+      <div class="flex gap-3 justify-center font-fredoka">
+        <button id="cancel-delete-class" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2 rounded-2xl">Cancel</button>
+        <button id="confirm-delete-class-btn" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-2 rounded-2xl shadow-md btn-tactile">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- CELEBRATION GOAL REACHED MODAL -->
   <div id="modal-celebration" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border-8 border-brand-yellow text-center animate-pop relative overflow-hidden">
@@ -363,7 +417,7 @@
       
       <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 inline-block w-full">
         <p class="text-xs uppercase font-bold text-amber-600 tracking-wider">REWARD UNLOCKED</p>
-        <p id="celebration-reward-name" class="text-2xl md:text-3xl font-black text-brand-purple mt-1">Pizza Party! 🍕</p>
+        <p id="celebration-reward-name" class="text-2xl md:text-3xl font-black text-brand-purple mt-1">Choice time in Clever 💻</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -431,16 +485,31 @@
       };
     }
 
-    // App State Management
+    // App Multi-Class State Management
     const state = {
-      count: 0,
-      goal: 50,
-      rewardTitle: "Pizza Party! 🍕",
-      palette: "rainbow",
+      activeClassId: 'class_1',
+      classes: {
+        'class_1': {
+          id: 'class_1',
+          name: 'Homeroom 🌟',
+          count: 5,
+          goal: 50,
+          rewardTitle: "Choice time in Clever 💻",
+          palette: "rainbow",
+          hasCelebrated: false,
+          marbles: []
+        }
+      },
       soundMuted: false,
-      volume: 0.8,
-      hasCelebrated: false
+      volume: 0.8
     };
+
+    function getCurrentClass() {
+      if (!state.classes[state.activeClassId]) {
+        state.activeClassId = Object.keys(state.classes)[0] || 'class_1';
+      }
+      return state.classes[state.activeClassId];
+    }
 
     // Color Palettes
     const PALETTES = {
@@ -566,7 +635,6 @@
 
     const soundMgr = new SoundManager();
 
-    // Matter.js Physics & Canvas Rendering
     const Engine = Matter.Engine,
           Bodies = Matter.Bodies,
           Composite = Matter.Composite,
@@ -580,16 +648,15 @@
     const CANVAS_HEIGHT = 650;
     const MARBLE_RADIUS = 16;
 
-    // Glass Jar Dimensions & Boundary Coordinates
+    // Compact Glass Jar Dimensions & Boundary Coordinates
     const JAR_CENTER_X = 250;
-    const JAR_BOTTOM_Y = 560;
-    const JAR_WIDTH = 320;
-    const JAR_HEIGHT = 380;
+    const JAR_BOTTOM_Y = 550;
+    const JAR_WIDTH = 250;
+    const JAR_HEIGHT = 310;
     const JAR_CENTER_Y = JAR_BOTTOM_Y - (JAR_HEIGHT / 2);
-    const JAR_NECK_WIDTH = 210;
-    const JAR_NECK_Y = 190;
+    const JAR_NECK_WIDTH = 165;
+    const JAR_NECK_Y = JAR_BOTTOM_Y - JAR_HEIGHT;
 
-    // Interactive Dragged Marble state
     let draggedMarble = null;
 
     function initPhysics() {
@@ -603,10 +670,8 @@
       });
       world = engine.world;
 
-      // Construct Rigid Boundaries for Glass Jar
       createJarBoundaries();
 
-      // Sound Collision Listener
       Matter.Events.on(engine, 'collisionStart', (evt) => {
         evt.pairs.forEach(pair => {
           const speedA = Vector.magnitude(pair.bodyA.velocity);
@@ -618,10 +683,7 @@
         });
       });
 
-      // Drag & Drop Mouse / Touch Listeners
       setupCanvasDragListeners();
-
-      // Start 60fps Animation Loop
       requestAnimationFrame(renderLoop);
     }
 
@@ -635,26 +697,19 @@
 
       const jarParts = [];
 
-      // Jar Bottom Floor
       jarParts.push(Bodies.rectangle(JAR_CENTER_X, JAR_BOTTOM_Y + 10, JAR_WIDTH - 60, 30, wallOpts));
-
-      // Slanted Corners
       jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 35, JAR_BOTTOM_Y - 10, 90, 30, { ...wallOpts, angle: Math.PI / 5 }));
       jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 35, JAR_BOTTOM_Y - 10, 90, 30, { ...wallOpts, angle: -Math.PI / 5 }));
 
-      // Main Vertical Side Walls
       jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 10, JAR_CENTER_Y + 50, 30, 290, wallOpts));
       jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 10, JAR_CENTER_Y + 50, 30, 290, wallOpts));
 
-      // Slanted Upper Shoulders
       jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_WIDTH / 2) + 38, JAR_NECK_Y + 45, 95, 30, { ...wallOpts, angle: -Math.PI / 4.5 }));
       jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_WIDTH / 2) - 38, JAR_NECK_Y + 45, 95, 30, { ...wallOpts, angle: Math.PI / 4.5 }));
 
-      // Neck Lips Left & Right
       jarParts.push(Bodies.rectangle(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y - 10, 30, 80, wallOpts));
       jarParts.push(Bodies.rectangle(JAR_CENTER_X + (JAR_NECK_WIDTH / 2) - 10, JAR_NECK_Y - 10, 30, 80, wallOpts));
 
-      // Outer Canvas Safety Walls
       jarParts.push(Bodies.rectangle(-30, CANVAS_HEIGHT / 2, 60, CANVAS_HEIGHT * 2, wallOpts));
       jarParts.push(Bodies.rectangle(CANVAS_WIDTH + 30, CANVAS_HEIGHT / 2, 60, CANVAS_HEIGHT * 2, wallOpts));
       jarParts.push(Bodies.rectangle(CANVAS_WIDTH / 2, CANVAS_HEIGHT + 40, CANVAS_WIDTH * 2, 80, wallOpts));
@@ -662,34 +717,21 @@
       Composite.add(world, jarParts);
     }
 
-    // Main Custom Animation & Drawing Loop
     function renderLoop() {
-      // Step Physics Simulation
       Engine.update(engine, 1000 / 60);
-
-      // Clear Canvas
       ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // Layer 1: Back Wooden Base & Soft Glass Tint
       drawJarBackground();
-
-      // Layer 2: All Physics Marbles
       drawMarbles();
-
-      // Layer 3: Glass Reflections & Rim Highlights
       drawJarForegroundGlass();
-
-      // Layer 4: Top Dispenser Tray & Ghost Drag Line
       drawDispenserTray();
 
       requestAnimationFrame(renderLoop);
     }
 
-    // Draw Jar Rear Shadow & Base
     function drawJarBackground() {
       ctx.save();
 
-      // Wooden Stand Base
       ctx.fillStyle = '#D4A373';
       ctx.beginPath();
       ctx.roundRect(JAR_CENTER_X - (JAR_WIDTH / 2) - 12, JAR_BOTTOM_Y + 16, JAR_WIDTH + 24, 26, 13);
@@ -699,7 +741,6 @@
       ctx.roundRect(JAR_CENTER_X - (JAR_WIDTH / 2) - 6, JAR_BOTTOM_Y + 18, JAR_WIDTH + 12, 8, 4);
       ctx.fill();
 
-      // Glass Inner Back Tint
       ctx.beginPath();
       ctx.moveTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
       ctx.lineTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y + 20);
@@ -723,10 +764,8 @@
       ctx.restore();
     }
 
-    // Draw Marbles inside jar
     function drawMarbles() {
       const bodies = Composite.allBodies(world);
-
       bodies.forEach(body => {
         if (body.label === 'marble') {
           const { x, y } = body.position;
@@ -739,18 +778,15 @@
       });
     }
 
-    // Render 3D Shiny Glass Marble
     function drawGlossySphere(x, y, radius, colorHex, angle = 0) {
       ctx.save();
       ctx.translate(x, y);
 
-      // Shadow Under Marble
       ctx.beginPath();
       ctx.arc(2, 3, radius, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.fill();
 
-      // Sphere Main Radial Gradient
       ctx.beginPath();
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
 
@@ -766,21 +802,18 @@
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Inner Glass Swirl Pattern
       ctx.rotate(angle);
       ctx.beginPath();
       ctx.ellipse(0, 0, radius * 0.65, radius * 0.28, Math.PI / 4, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.fill();
 
-      // Top Specular Reflection Dot
       ctx.rotate(-angle);
       ctx.beginPath();
       ctx.arc(-radius * 0.32, -radius * 0.32, radius * 0.32, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
       ctx.fill();
 
-      // Bottom Soft Bounce Highlight
       ctx.beginPath();
       ctx.arc(radius * 0.25, radius * 0.25, radius * 0.2, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
@@ -789,11 +822,9 @@
       ctx.restore();
     }
 
-    // Draw Front Specular Highlights & Glass Rim
     function drawJarForegroundGlass() {
       ctx.save();
 
-      // Glass Outer Outline
       ctx.beginPath();
       ctx.moveTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2), JAR_NECK_Y - 40);
       ctx.lineTo(JAR_CENTER_X - (JAR_NECK_WIDTH / 2) + 10, JAR_NECK_Y + 20);
@@ -810,7 +841,6 @@
       ctx.lineWidth = 6;
       ctx.stroke();
 
-      // Diagonal Specular Reflection Line
       ctx.beginPath();
       ctx.moveTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 22, JAR_NECK_Y + 80);
       ctx.lineTo(JAR_CENTER_X - (JAR_WIDTH / 2) + 22, JAR_BOTTOM_Y - 35);
@@ -826,7 +856,6 @@
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      // Open Glass Rim Oval at Neck
       ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
       ctx.beginPath();
       ctx.ellipse(JAR_CENTER_X, JAR_NECK_Y - 40, (JAR_NECK_WIDTH / 2) + 6, 14, 0, 0, Math.PI * 2);
@@ -838,11 +867,9 @@
       ctx.restore();
     }
 
-    // Render Dispenser Tray at Top
     function drawDispenserTray() {
       ctx.save();
       
-      // Tray Container
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
       ctx.roundRect(80, 15, 340, 60, 30);
@@ -851,20 +878,19 @@
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Tray Header Label
       ctx.font = 'bold 11px Quicksand, sans-serif';
       ctx.fillStyle = '#94A3B8';
       ctx.textAlign = 'center';
       ctx.fillText('DISPENSER TRAY - DRAG TO DROP', JAR_CENTER_X, 30);
 
-      // Sample Marbles sitting in tray
-      const palette = PALETTES[state.palette];
+      const currentCls = getCurrentClass();
+      const activePaletteName = (currentCls && currentCls.palette) ? currentCls.palette : 'rainbow';
+      const palette = PALETTES[activePaletteName] || PALETTES.rainbow;
       const trayPositions = [125, 187, 250, 313, 375];
       trayPositions.forEach((xPos, idx) => {
         drawGlossySphere(xPos, 50, MARBLE_RADIUS, palette[idx % palette.length], 0);
       });
 
-      // Draw Trajectory line if marble is being dragged
       if (draggedMarble) {
         const { x, y } = draggedMarble.position;
         ctx.beginPath();
@@ -889,7 +915,6 @@
       return '#' + (0x1000000 + (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 + (B < 255 ? (B < 1 ? 0 : B) : 255)).toString(16).slice(1);
     }
 
-    // Converts Mouse/Touch Event coordinates to Canvas 500x650 coordinate space
     function getCanvasPos(e) {
       const rect = canvas.getBoundingClientRect();
       const touch = e.touches ? e.touches[0] : (e.changedTouches ? e.changedTouches[0] : e);
@@ -901,18 +926,17 @@
       };
     }
 
-    // Touch & Mouse Drag Handlers
     function setupCanvasDragListeners() {
       const handleDown = (e) => {
         const pos = getCanvasPos(e);
 
-        // 1. Check if user clicked in top Dispenser Tray (Y < 90)
         if (pos.y < 95) {
           e.preventDefault();
           soundMgr.init();
           
-          // Spawn temporary static marble following cursor
-          const palette = PALETTES[state.palette];
+          const currentCls = getCurrentClass();
+          const activePaletteName = (currentCls && currentCls.palette) ? currentCls.palette : 'rainbow';
+          const palette = PALETTES[activePaletteName] || PALETTES.rainbow;
           const color = palette[Math.floor(Math.random() * palette.length)];
 
           const marble = Bodies.circle(pos.x, pos.y, MARBLE_RADIUS, {
@@ -931,7 +955,6 @@
           return;
         }
 
-        // 2. Check if user clicked an existing marble inside jar
         const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
         for (let m of marbles) {
           const dx = pos.x - m.position.x;
@@ -945,7 +968,6 @@
           }
         }
 
-        // 3. If user clicked near open jar neck mouth, spawn a marble!
         if (pos.y >= 95 && pos.y <= JAR_NECK_Y + 20 && Math.abs(pos.x - JAR_CENTER_X) < JAR_NECK_WIDTH) {
           e.preventDefault();
           spawnMarbleAt(pos.x, pos.y);
@@ -965,7 +987,6 @@
         e.preventDefault();
         
         Body.setStatic(draggedMarble, false);
-        // Give subtle initial drop velocity
         Body.setVelocity(draggedMarble, { 
           x: (Math.random() - 0.5) * 2, 
           y: 2 + Math.random() * 2 
@@ -974,7 +995,8 @@
         soundMgr.playDrop();
         draggedMarble = null;
 
-        state.count = getMarbleCount();
+        const currentClass = getCurrentClass();
+        currentClass.count = getMarbleCount();
         updateUI();
         checkGoalReached();
       };
@@ -988,10 +1010,10 @@
       window.addEventListener('touchend', handleUp, { passive: false });
     }
 
-    // Spawn marble at position
-    function spawnMarbleAt(x, y, playAudio = true) {
-      const palette = PALETTES[state.palette];
-      const randomColor = palette[Math.floor(Math.random() * palette.length)];
+    function spawnMarbleAt(x, y, playAudio = true, explicitColor = null) {
+      const currentClass = getCurrentClass();
+      const palette = PALETTES[currentClass.palette] || PALETTES.rainbow;
+      const color = explicitColor || palette[Math.floor(Math.random() * palette.length)];
 
       const marble = Bodies.circle(x, y, MARBLE_RADIUS, {
         restitution: 0.45,
@@ -1001,10 +1023,10 @@
         render: { visible: false }
       });
 
-      marble.marbleColor = randomColor;
+      marble.marbleColor = color;
       Composite.add(world, marble);
 
-      state.count = getMarbleCount();
+      currentClass.count = getMarbleCount();
       updateUI();
 
       if (playAudio) {
@@ -1028,10 +1050,10 @@
     function removeMarble() {
       const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
       if (marbles.length > 0) {
-        // Find topmost marble
         const topMarble = marbles.reduce((highest, current) => current.position.y < highest.position.y ? current : highest, marbles[0]);
         Composite.remove(world, topMarble);
-        state.count = getMarbleCount();
+        const currentClass = getCurrentClass();
+        currentClass.count = getMarbleCount();
         updateUI();
         soundMgr.playClink(0.4);
       }
@@ -1044,17 +1066,23 @@
     function emptyJar() {
       const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
       marbles.forEach(m => Composite.remove(world, m));
-      state.count = 0;
-      state.hasCelebrated = false;
+      
+      const currentClass = getCurrentClass();
+      currentClass.count = 0;
+      currentClass.hasCelebrated = false;
+      currentClass.marbles = [];
+
       updateUI();
     }
 
     function updateUI() {
-      document.getElementById('current-count').innerText = state.count;
-      document.getElementById('goal-target').innerText = state.goal;
-      document.getElementById('reward-title-display').innerText = state.rewardTitle;
+      const currentClass = getCurrentClass();
 
-      const remaining = Math.max(state.goal - state.count, 0);
+      document.getElementById('current-count').innerText = currentClass.count;
+      document.getElementById('goal-target').innerText = currentClass.goal;
+      document.getElementById('reward-title-display').innerText = currentClass.rewardTitle;
+
+      const remaining = Math.max(currentClass.goal - currentClass.count, 0);
       const remainingPill = document.getElementById('remaining-count');
       if (remaining === 0) {
         remainingPill.innerText = "GOAL REACHED!";
@@ -1064,7 +1092,7 @@
         remainingPill.className = "text-lg font-bold text-brand-coral bg-rose-50 px-3 py-1 rounded-xl border border-rose-100 inline-block";
       }
 
-      const percent = Math.min(Math.round((state.count / state.goal) * 100), 100);
+      const percent = Math.min(Math.round((currentClass.count / currentClass.goal) * 100), 100);
       document.getElementById('percent-display').innerText = `${percent}%`;
       document.getElementById('progress-bar-fill').style.width = `${percent}%`;
 
@@ -1075,12 +1103,70 @@
         badge.classList.add('hidden');
       }
 
+      document.querySelectorAll('.palette-btn').forEach(b => {
+        if (b.dataset.palette === currentClass.palette) {
+          b.classList.add('border-brand-purple', 'scale-105');
+        } else {
+          b.classList.remove('border-brand-purple', 'scale-105');
+          b.classList.add('border-transparent');
+        }
+      });
+
+      renderClassDropdown();
       saveLocalState();
     }
 
+    function renderClassDropdown() {
+      const select = document.getElementById('class-select');
+      select.innerHTML = '';
+      Object.values(state.classes).forEach(cls => {
+        const opt = document.createElement('option');
+        opt.value = cls.id;
+        opt.textContent = `${cls.name} (${cls.count}/${cls.goal})`;
+        if (cls.id === state.activeClassId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function switchClass(classId) {
+      if (!state.classes[classId]) return;
+
+      saveCurrentClassMarbles();
+
+      const currentMarbles = Composite.allBodies(world).filter(b => b.label === 'marble');
+      currentMarbles.forEach(m => Composite.remove(world, m));
+
+      state.activeClassId = classId;
+      const newClass = getCurrentClass();
+
+      if (newClass.marbles && newClass.marbles.length > 0) {
+        newClass.marbles.forEach((col, i) => {
+          const spawnX = JAR_CENTER_X + (Math.random() * 80 - 40);
+          const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
+          spawnMarbleAt(spawnX, spawnY, false, col);
+        });
+      } else if (newClass.count > 0) {
+        for (let i = 0; i < newClass.count; i++) {
+          const spawnX = JAR_CENTER_X + (Math.random() * 80 - 40);
+          const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
+          spawnMarbleAt(spawnX, spawnY, false);
+        }
+      }
+
+      updateUI();
+    }
+
+    function saveCurrentClassMarbles() {
+      const currentClass = getCurrentClass();
+      const marbles = Composite.allBodies(world).filter(b => b.label === 'marble');
+      currentClass.marbles = marbles.map(b => b.marbleColor || PALETTES[currentClass.palette][0]);
+      currentClass.count = marbles.length;
+    }
+
     function checkGoalReached() {
-      if (state.count >= state.goal && !state.hasCelebrated) {
-        state.hasCelebrated = true;
+      const currentClass = getCurrentClass();
+      if (currentClass.count >= currentClass.goal && !currentClass.hasCelebrated) {
+        currentClass.hasCelebrated = true;
         soundMgr.playFanfare();
 
         if (typeof confetti === 'function') {
@@ -1092,21 +1178,19 @@
         }
 
         setTimeout(() => {
-          document.getElementById('celebration-reward-name').innerText = state.rewardTitle;
+          document.getElementById('celebration-reward-name').innerText = currentClass.rewardTitle;
           document.getElementById('modal-celebration').classList.remove('hidden');
         }, 750);
       }
     }
 
     function saveLocalState() {
+      saveCurrentClassMarbles();
       const data = {
-        count: state.count,
-        goal: state.goal,
-        rewardTitle: state.rewardTitle,
-        palette: state.palette,
+        activeClassId: state.activeClassId,
+        classes: state.classes,
         soundMuted: soundMgr.muted,
-        volume: soundMgr.volume,
-        hasCelebrated: state.hasCelebrated
+        volume: soundMgr.volume
       };
       localStorage.setItem('digital_marble_jar_data', JSON.stringify(data));
     }
@@ -1116,10 +1200,10 @@
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          state.goal = parsed.goal || 50;
-          state.rewardTitle = parsed.rewardTitle || "Pizza Party! 🍕";
-          state.palette = parsed.palette || "rainbow";
-          state.hasCelebrated = parsed.hasCelebrated || false;
+          if (parsed.classes && Object.keys(parsed.classes).length > 0) {
+            state.classes = parsed.classes;
+            state.activeClassId = parsed.activeClassId || Object.keys(parsed.classes)[0];
+          }
           soundMgr.muted = parsed.soundMuted || false;
           soundMgr.volume = parsed.volume !== undefined ? parsed.volume : 0.8;
 
@@ -1127,27 +1211,24 @@
           document.getElementById('volume-val').innerText = `${Math.round(soundMgr.volume * 100)}%`;
           updateSoundIcon();
 
-          // Highlight saved palette button
-          document.querySelectorAll('.palette-btn').forEach(b => {
-            if (b.dataset.palette === state.palette) {
-              b.classList.add('border-brand-purple', 'scale-105');
-            } else {
-              b.classList.remove('border-brand-purple', 'scale-105');
-              b.classList.add('border-transparent');
+          const currentClass = getCurrentClass();
+          if (currentClass.marbles && currentClass.marbles.length > 0) {
+            currentClass.marbles.forEach((col, i) => {
+              const spawnX = JAR_CENTER_X + (Math.random() * 80 - 40);
+              const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
+              spawnMarbleAt(spawnX, spawnY, false, col);
+            });
+          } else {
+            for (let i = 0; i < (currentClass.count || 5); i++) {
+              const spawnX = JAR_CENTER_X + (Math.random() * 60 - 30);
+              const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
+              spawnMarbleAt(spawnX, spawnY, false);
             }
-          });
-
-          const savedCount = parsed.count || 0;
-          for (let i = 0; i < savedCount; i++) {
-            const spawnX = JAR_CENTER_X + (Math.random() * 80 - 40);
-            const spawnY = JAR_BOTTOM_Y - 30 - (Math.floor(i / 6) * 18);
-            spawnMarbleAt(spawnX, spawnY, false);
           }
         } catch (e) {
           console.error("Could not parse saved state", e);
         }
       } else {
-        // Default initial 5 marbles
         for (let i = 0; i < 5; i++) {
           spawnMarbleAt(JAR_CENTER_X + (Math.random() * 60 - 30), JAR_BOTTOM_Y - 30, false);
         }
@@ -1164,17 +1245,83 @@
       }
     }
 
-    // Direct UI Setup (Guarantees buttons work regardless of physics)
     function setupUIEvents() {
       // Action Buttons
       document.getElementById('btn-add-1').onclick = () => addMarble(1);
       document.getElementById('btn-add-5').onclick = () => addMarble(5);
       document.getElementById('btn-sub-1').onclick = removeMarble;
 
-      // Empty Confirm Modal
-      document.getElementById('btn-empty-prompt').onclick = () => {
-        document.getElementById('modal-confirm-empty').classList.remove('hidden');
+      // Class Dropdown Selection Event
+      document.getElementById('class-select').onchange = (e) => {
+        switchClass(e.target.value);
       };
+
+      // Add Class Modal Events
+      const modalAddClass = document.getElementById('modal-add-class');
+      document.getElementById('btn-add-class').onclick = () => {
+        document.getElementById('new-class-name').value = '';
+        document.getElementById('new-class-reward').value = 'Choice time in Clever 💻';
+        document.getElementById('new-class-goal').value = 50;
+        modalAddClass.classList.remove('hidden');
+      };
+      document.getElementById('close-add-class').onclick = () => modalAddClass.classList.add('hidden');
+      document.getElementById('cancel-add-class').onclick = () => modalAddClass.classList.add('hidden');
+
+      document.getElementById('save-new-class').onclick = () => {
+        const name = document.getElementById('new-class-name').value.trim();
+        const rewardTitle = document.getElementById('new-class-reward').value.trim() || 'Class Reward! 🏆';
+        const goal = parseInt(document.getElementById('new-class-goal').value, 10) || 50;
+
+        if (!name) return;
+
+        const newId = 'class_' + Date.now();
+        state.classes[newId] = {
+          id: newId,
+          name: name,
+          count: 0,
+          goal: goal,
+          rewardTitle: rewardTitle,
+          palette: 'rainbow',
+          hasCelebrated: false,
+          marbles: []
+        };
+
+        modalAddClass.classList.add('hidden');
+        switchClass(newId);
+      };
+
+      // Delete Class Modal Events
+      const modalDeleteClass = document.getElementById('modal-confirm-delete-class');
+      document.getElementById('btn-delete-class').onclick = () => {
+        if (Object.keys(state.classes).length <= 1) {
+          alert("You must keep at least one class profile!");
+          return;
+        }
+        const currentClass = getCurrentClass();
+        document.getElementById('delete-class-confirm-msg').innerText = `Are you sure you want to delete "${currentClass.name}" and all its progress?`;
+        modalDeleteClass.classList.remove('hidden');
+      };
+
+      document.getElementById('cancel-delete-class').onclick = () => modalDeleteClass.classList.add('hidden');
+
+      document.getElementById('confirm-delete-class-btn').onclick = () => {
+        const deletingId = state.activeClassId;
+        delete state.classes[deletingId];
+        modalDeleteClass.classList.add('hidden');
+
+        const remainingIds = Object.keys(state.classes);
+        switchClass(remainingIds[0]);
+      };
+
+      // Clear Jar from Settings Modal
+      const settingsClearBtn = document.getElementById('btn-settings-clear');
+      if (settingsClearBtn) {
+        settingsClearBtn.onclick = () => {
+          document.getElementById('modal-settings').classList.add('hidden');
+          document.getElementById('modal-confirm-empty').classList.remove('hidden');
+        };
+      }
+
       document.getElementById('cancel-empty').onclick = () => {
         document.getElementById('modal-confirm-empty').classList.add('hidden');
       };
@@ -1183,7 +1330,7 @@
         emptyJar();
       };
 
-      // Sound Mute Toggle
+      // Sound Toggle
       document.getElementById('btn-sound').onclick = () => {
         soundMgr.muted = !soundMgr.muted;
         updateSoundIcon();
@@ -1193,8 +1340,9 @@
       // Settings Modal Open/Close
       const modalSettings = document.getElementById('modal-settings');
       document.getElementById('btn-settings').onclick = () => {
-        document.getElementById('setting-reward-title').value = state.rewardTitle;
-        document.getElementById('setting-goal-num').value = state.goal;
+        const currentClass = getCurrentClass();
+        document.getElementById('setting-reward-title').value = currentClass.rewardTitle;
+        document.getElementById('setting-goal-num').value = currentClass.goal;
         modalSettings.classList.remove('hidden');
       };
       document.getElementById('close-settings').onclick = () => modalSettings.classList.add('hidden');
@@ -1202,10 +1350,11 @@
 
       // Save Settings
       document.getElementById('save-settings').onclick = () => {
+        const currentClass = getCurrentClass();
         const newTitle = document.getElementById('setting-reward-title').value.trim();
         const newGoal = parseInt(document.getElementById('setting-goal-num').value, 10);
-        if (newTitle) state.rewardTitle = newTitle;
-        if (newGoal && newGoal > 0) state.goal = newGoal;
+        if (newTitle) currentClass.rewardTitle = newTitle;
+        if (newGoal && newGoal > 0) currentClass.goal = newGoal;
 
         modalSettings.classList.add('hidden');
         updateUI();
@@ -1253,7 +1402,8 @@
       document.querySelectorAll('.palette-btn').forEach(btn => {
         btn.onclick = (e) => {
           const targetBtn = e.currentTarget;
-          state.palette = targetBtn.dataset.palette;
+          const currentClass = getCurrentClass();
+          currentClass.palette = targetBtn.dataset.palette;
 
           document.querySelectorAll('.palette-btn').forEach(b => {
             b.classList.remove('border-brand-purple', 'scale-105');
